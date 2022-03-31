@@ -1,0 +1,159 @@
+---
+title: "ZetaSuite"
+author: Yajing Hao, Shuyang Zhang, Junhui Li, Changwei Shao, Guofeng Zhao, Xiang-Dong Fu
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+keep_html: true
+vignette: >
+  %\VignetteIndexEntry{ZetaSuite}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+# Introduction
+
+The rapid advance of high-throughput technologies has enabled the generation of two-dimensional or even multi-dimensional high-throughput data, e.g., genome-wide siRNA screen (1st dimension) for multiple changes in gene expression (2nd dimension) in many different cell types or tissues or under different experimental conditions (3rd dimension). We show that the simple Z-based statistics and derivatives are no longer suitable for analyzing such data because of the accumulation of experimental noise and/or off-target effects.
+
+Here we introduce ZetaSuite, a new R package designed to score and rank hits from two-dimensional screens, select the thresholds for high-confidence and candidate hits . Applying this method to two large cancer dependency screen datasets, we identify not only genes critical for cell fitness, but also those required for constraining cell proliferation. Strikingly, most of those cancer constraining genes function in DNA replication/repair checkpoint, suggesting that cancer cells also need to protect their genomes for long-term survival. We also illustrate a unique utility of ZetaSuite in analyzing single cell transcriptomics to differentiate rare cells from damaged ones, as showcased with the identification of critically infiltrated immune cells in placenta, demonstrating the power of ZetaSuite in elucidating underlying biology yet minimizing unwanted artifacts.
+
+
+
+# Quick start
+```{r, eval=F, echo=T}
+## install ZetaSuite R package
+install.packages("ZetaSuite")
+
+## load ZetaSuite R pakcage
+library(ZetaSuite)
+```
+
+# ZetaSuite R package includes the following steps:
+
+1). QC evaluation of the input matrix. This function only works when the user provides negative and positive controls. The aim of QC is to evaluate the ability of functional readouts in discriminating negative and positive controls. This process won’t affect the following analysis.
+
+2). Calculating the Z-score to make the readouts are comparable. This function is optimal. The users can ignore this function when the values in the input matrix has been already normalized.
+
+3). Generation of Zeta plot for each gene. We first divide the Z-score/values provided by users into bins, and at each bin, we determine the number of readouts that show significant changes at or above the cutoff at the bin for each siRNA-targeted gene and then divide this number with the total of measured readouts. 
+
+4). Using the SVM curve to filter the genes which show similar response with negative controls. 
+
+5). Calculating the Zeta score. Zeta score is the area under the screening results. It was designed to evaluate the hits effects in two dimensional screening and the quality of the cells detected  in scRNAseq datasets.
+
+6). Screen Strength for choosing appropriate cut-off. In SS plot, the SS value would be progressively elevated (indicating progressive reduction of false positive hits) with increasing cut-off stringency. The balance points in the Screen Strength are the solutions to choose cutoffs that maximum the hits number at certain false discovery levels.
+
+# An example of large-scale screening analysis workflow using ZetaSuite
+
+We provided  an example data (generated from our in-house HTS2 screening dataset) for using ZetaSuite to explore the hits. To save the testing time, we provided a subsampled dataset. While this test data may not yield reasonable results, it can be used to see how the workflow is configured and executed.
+
+we started with the pre-processed data set which was already removed the low quality rows and columns.
+
+Users can find the example data set with data() command. The example input files include:
+
+1.	input matrix file, countMat, Each row represents gene with specific knocking-down siRNA pool, each column is an AS event. The values in the matrix are the processed fold change values between included exons and skipping exons read counts. Check the data by 'data(“CountMat”)'.(we randomly pick-up 1609 genes and 100 AS events as example matrix)
+
+2. input negative file, the wells treated with non-specific siRNAs, negGene. If users didn’t have the build-in negative controls, the non-expressed genes should be provided here. Check the data by 'data(“negGene”)'.
+
+3.	input positive file, the wells treated with siRNAs targeting to PTB, posGene. The file is optimal is users don’t want to deduce a SVM curve. Check the data by 'data(“posGene”)'.
+
+4.	input internal negative control (non-expressed genes), genes which annotated as non-expressed (RPKM<1) in HeLa cells, nonExpGene. Check the data by 'data(“nonExpGene”)'.
+
+
+step 1: QC figures
+
+```{r workflow1, message=FALSE, include=FALSE}
+library(ZetaSuite)
+data(countMat)
+data(negGene)
+data(posGene)
+qcList <- QC(countMat,negGene,posGene)
+```
+
+```{r workflow1.1, eval=F, echo=T}
+library(ZetaSuite)
+data(countMat)
+data(negGene)
+data(posGene)
+qcList <- QC(countMat,negGene,posGene)
+```
+
+test_tSNE_QC is the global evaluation based on all the readouts. This figure can evaluate whether the positive and negative samples are well separated based on current all readouts.
+```{r, fig.height = 4, fig.width = 6, fig.align = "center"}
+qcList[[2]]
+```
+
+The below 3 figures are the quality evaluation of the individual readouts.
+
+```{r, fig.height = 3, fig.width = 8, fig.align = "center"}
+qcList[[1]]
+```
+```{r, fig.height = 4, fig.width = 8, fig.align = "center"}
+grid::grid.draw(qcList[[3]])
+```
+```{r, fig.height = 4, fig.width = 6, fig.align = "center"}
+qcList[[4]]
+```
+
+step 2: Normalized matrix 
+
+```{r workflow2}
+data(countMat)
+data(negGene)
+ZscoreVal <- Zscore(countMat,negGene)
+ZscoreVal[1:5,1:5]
+```
+
+ZscoreVal is the normalized matrix, each row represents each knocking-down condition and each column is a specific readout (AS event). The values in the matrix are the normalized values.
+
+step 3: Generating Zeta plot for positive and negative samples
+
+```{r workflow3, fig.height = 4, fig.width = 4, fig.align = "center"}
+data(countMat)
+data(negGene)
+data(posGene)
+ZscoreVal <- Zscore(countMat,negGene)
+ECList <- EventCoverage(ZscoreVal,negGene,posGene,binNum=100,combine=TRUE)
+ECList[[2]][[1]]
+ECList[[2]][[2]]
+```
+
+Step 4: Calculating Zeta score for each screened gene
+
+```{r workflow4}
+data(ZseqList)
+data(SVMcurve)
+data(countMat)
+data(negGene)
+ZscoreVal <- Zscore(countMat,negGene)
+zetaData <- Zeta(ZscoreVal,ZseqList,SVM=FALSE)
+```
+
+zetaData is the zeta values for all tested knockding-down genes including positive and negative controls. The first column is the direction which knockding-down gene will lead to exon inclusion, whereas the second column is the knock-down genes will lead to exon skipping.
+
+Step 5: Generating Screen Strength plot for hits selection
+
+```{r workflow5, fig.height = 3, fig.width = 6, fig.align = "center"}
+data(nonExpGene)
+data(negGene)
+data(posGene)
+data(ZseqList)
+data(countMat)
+ZscoreVal <- Zscore(countMat,negGene)
+zetaData <- Zeta(ZscoreVal,ZseqList,SVM=FALSE)
+cutoffval <- FDRcutoff(zetaData,negGene,posGene,nonExpGene,combine=TRUE)
+cutoffval[[2]][[1]]
+cutoffval[[2]][[2]]
+```
+
+# Citations
+software : Yajing Hao, Changwei Shao, Guofeng Zhao, Xiang-Dong Fu (2021). ZetaSuite, A Computational Method for Analyzing Multi-dimensional High-throughput Data, Reveals Genes with Opposite Roles in Cancer Dependency. Forthcoming
+
+in-house dataset : Changwei Shao, Yajing Hao, Jinsong Qiu, Bing Zhou, Hairi Li, Yu Zhou, Fan Meng, Li Jiang, Lan-Tao Gou, Jun Xu, Yuanjun Li,Hui Wang, Gene W. Yeo, Dong Wang, Xiong Ji, Christopher K. Glass, Pedro Aza-Blanc, Xiang-Dong Fu (2021). HTS2 Screen for Global Splicing Regulators Reveals a Key Role of the Pol II Subunit RPB9 in Coupling between Transcription and Pre-mRNA Splicing. Cell. Forthcoming.
+
+# Session Info
+```{r sessionInfo}
+sessionInfo()
+```
