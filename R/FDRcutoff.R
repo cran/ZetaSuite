@@ -32,7 +32,7 @@
 #'
 #' @keywords ZetaSuite FDR cutoff
 #'
-#' @import ggplot2 scater
+#' @import ggplot2
 #'
 #' @importFrom grDevices dev.off pdf
 #'
@@ -63,7 +63,7 @@ FDRcutoff <- function (zetaData, negGene, posGene, nonExpGene, combine = FALSE) 
       numNexp <- sum(zetaData[, "Zeta_D"] >= num & zetaData[, "type"] %in% c("non_exp"))
       FDR_Nexp <- numNexp/totalNum
       screen_Stress <- (iFDR - FDR_Nexp)/iFDR
-      FDR_cutOff_de[index, ] <- c(num, totalNum, numNexp, FDR_Nexp, screen_Stress, "Decrease")
+      FDR_cutOff_de[index, ] <- c(num, FDR_Nexp,screen_Stress,totalNum, numNexp, "Decrease")
       index <- index + 1
     }
     seqI <- seq(minI, maxI, stepI)
@@ -102,23 +102,23 @@ FDRcutoff <- function (zetaData, negGene, posGene, nonExpGene, combine = FALSE) 
   FDR_cutOff$SS <- as.numeric(FDR_cutOff$SS)
   FDR_cutOff$Cut_Off <- as.numeric(FDR_cutOff$Cut_Off)
   zetaData_NS <- zetaData[zetaData$type != "NS_mix", ]
-  
+
   p1 <- ggplot(zetaData_NS) + geom_jitter(aes_string(x = "type", y = "Zeta_D", col = "type")) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("") + scale_color_manual(values = c("#c994c7", "#67a9cf", "#ef8a62"))
   p2 <- ggplot(zetaData_NS) + geom_jitter(aes_string(x = "type", y = "Zeta_I", col = "type")) + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + xlab("") + scale_color_manual(values = c("#c994c7", "#67a9cf", "#ef8a62"))
   p_Zeta_type <- gridExtra::grid.arrange(p1, p2, nrow = 1)
-  
+
   if (combine == FALSE) {
     fdtss <- FDR_cutOff[FDR_cutOff$SS < 0.9, ]
     Dec <- fdtss[fdtss$Type == "Decrease", ]
     Inc <- fdtss[fdtss$Type == "Increase", ]
-    
+
     p1 <- ggplot(Dec, aes_string(x = "Cut_Off", y = "SS", col = "Type")) + geom_point() + geom_smooth(span = 0.2) + theme_bw() + xlab("Zeta Score") + ylab("Screen strength") + theme(legend.position = c(0.8, 0.2), legend.title = element_blank())
     p2 <- ggplot(Inc, aes_string(x = "Cut_Off", y = "SS", col = "Type")) + geom_point() + geom_smooth(span = 0.2) + theme_bw() + xlab("Zeta Score") + ylab("Screen strength") + theme(legend.position = c(0.8, 0.2), legend.title = element_blank())
     p_SS_cutOff <- gridExtra::grid.arrange(p1, p2, nrow = 1)
-    
+
   } else {
     fdtss <- FDR_cutOff[FDR_cutOff$SS < 1, ]
-    
+
     p_SS_cutOff <- ggplot(fdtss, aes_string(x = "Cut_Off", y = "SS", col = "Type")) + geom_point() + geom_smooth(span = 0.2) + theme_bw() + xlab("Zeta Score") + ylab("Screen strength") + theme(legend.position = c(0.8, 0.2), legend.title = element_blank())
   }
   plotList <- list()

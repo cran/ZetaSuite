@@ -1,8 +1,8 @@
-d371374e3b9d443a26b42374f38e2501 *DESCRIPTION
-81062333bac36b619dbb3ca0d23632bd *NAMESPACE
+916dfec258df8e8a03802adca4c0ee36 *DESCRIPTION
+f946ffb73cb7af6350cdca137f297d50 *NAMESPACE
 6c316c4d23354b81736e8f62ca9b0007 *R/EventCoverage.R
-6d975ace319f3327fdb2a6ac50f578df *R/FDRcutoff.R
-8a13bcbd65cc640831f25c8f070362f9 *R/QC.R
+59b02431290ebe35f8f4e0b9ca35109a *R/FDRcutoff.R
+ce030e4346692e1c20a1720044ca9a79 *R/QC.R
 7109fb14e7a3d6ec13567dba926785bd *R/SVM.R
 1775b212021da036e1054acf55c4f712 *R/Zeta.R
 6eba0dbdf1f491a662165b8f3366fe3a *R/ZetaSuitSC.R
@@ -18,7 +18,7 @@ a0b10a210c5a53361288482324ef08ff *data/nonExpGene.rda
 56d8d91c5e8141a9fb21c2291e4dece6 *data/posGene.rda
 2005cb01b0f6bb9761d4d5057ed8653d *inst/doc/ZetaSuite.R
 6d25f7132fe0a056782f7abf654a85f1 *inst/doc/ZetaSuite.Rmd
-e85e678b69a41db0886b358b93dad998 *inst/doc/ZetaSuite.html
+89ce83fe82f17751ccb4dec4c98713e4 *inst/doc/ZetaSuite.html
 fd41dd347e0ccf74ee5f73e00bed97e6 *man/EventCoverage.Rd
 62365f0fcb49d150289d356cadfb5c9c *man/FDRcutoff.Rd
 102ad4d57173ddbbcba646149934d4da *man/QC.Rd

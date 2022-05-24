@@ -28,7 +28,7 @@
 #'
 #' @keywords ZetaSuite quality
 #'
-#' @import ggplot2 reshape2 scater Rtsne
+#' @import ggplot2 reshape2 Rtsne
 #'
 #' @importFrom grDevices colorRampPalette dev.off pdf png
 #'
